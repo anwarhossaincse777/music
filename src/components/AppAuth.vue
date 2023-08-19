@@ -1,9 +1,35 @@
 <script setup>
+
+import { Form, Field, defineRule, ErrorMessage } from 'vee-validate';
+import { required, email, min, max, alpha_spaces, min_value, max_value, confirmed } from '@vee-validate/rules';
+
 import{ref} from 'vue'
 import { useModalStore } from "../stores/modal";
 const modalStore = useModalStore();
 
 let tab=ref("login")
+
+defineRule('required',required)
+defineRule('email',email)
+defineRule('min',min)
+defineRule('max',max)
+defineRule('alpha_spaces',alpha_spaces)
+defineRule('min_value',min_value)
+defineRule('max_value',max_value)
+defineRule('confirmed',confirmed)
+
+
+let schema = {
+    name: "required|min:3|max:100|alpha_spaces",
+    email: "required|min:3|max:100|email",
+    age: "required|min_value:18|max_value:100",
+    password: "required|min:3|max:100",
+    confirm_password: "confirmed:@password",
+    country: "",
+    tos: ""
+
+}
+
 
 </script>
 <template>
@@ -64,24 +90,29 @@ let tab=ref("login")
           </ul>
 
           <!-- Login Form -->
-          <form v-show="tab === 'login'">
+
+          <Form v-show="tab === 'login'" :validation-schema="schema">
             <!-- Email -->
             <div class="mb-3">
               <label class="inline-block mb-2">Email</label>
-              <input
+              <Field
+                  name="email"
                   type="email"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                   placeholder="Enter Email"
               />
+              <ErrorMessage class="text-red-600" name="email" />
             </div>
             <!-- Password -->
             <div class="mb-3">
               <label class="inline-block mb-2">Password</label>
-              <input
+              <Field
+                  name="password"
                   type="password"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                   placeholder="Password"
               />
+              <ErrorMessage class="text-red-600" name="password" />
             </div>
             <button
                 type="submit"
@@ -89,71 +120,87 @@ let tab=ref("login")
             >
               Submit
             </button>
-          </form>
+          </Form>
 
           <!-- Registration Form -->
-          <form v-show="tab==='register'">
+          <Form v-show="tab==='register'" :validation-schema="schema">
             <!-- Name -->
             <div class="mb-3">
               <label class="inline-block mb-2">Name</label>
-              <input
+              <Field
                   type="text"
+                  name="name"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                   placeholder="Enter Name"
               />
+              <ErrorMessage class="text-red-600" name="name" />
             </div>
             <!-- Email -->
             <div class="mb-3">
               <label class="inline-block mb-2">Email</label>
-              <input
+              <Field
                   type="email"
+                  name="email"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                   placeholder="Enter Email"
               />
+              <ErrorMessage class="text-red-600" name="email" />
             </div>
+
             <!-- Age -->
             <div class="mb-3">
               <label class="inline-block mb-2">Age</label>
-              <input
+              <Field
                   type="number"
+                  name="age"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
               />
+              <ErrorMessage class="text-red-600" name="age" />
             </div>
             <!-- Password -->
             <div class="mb-3">
               <label class="inline-block mb-2">Password</label>
-              <input
+              <Field
                   type="password"
+                  name="password"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                   placeholder="Password"
               />
+              <ErrorMessage class="text-red-600" name="password" />
             </div>
             <!-- Confirm Password -->
             <div class="mb-3">
               <label class="inline-block mb-2">Confirm Password</label>
-              <input
+              <Field
                   type="password"
+                  name="confirm_password"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                   placeholder="Confirm Password"
               />
+              <ErrorMessage class="text-red-600" name="confirm_password" />
             </div>
             <!-- Country -->
             <div class="mb-3">
               <label class="inline-block mb-2">Country</label>
               <select
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
+               name="country"
               >
                 <option value="USA">USA</option>
                 <option value="Mexico">Mexico</option>
                 <option value="Germany">Germany</option>
               </select>
+              <ErrorMessage class="text-red-600" name="country" />
             </div>
             <!-- TOS -->
             <div class="mb-3 pl-6">
-              <input
+              <Field
+                  name="tos"
                   type="checkbox"
                   class="w-4 h-4 float-left -ml-6 mt-1 rounded"
               />
+
+              <ErrorMessage class="text-red-600" name="tos" />
               <label class="inline-block">Accept terms of service</label>
             </div>
             <button
@@ -162,7 +209,7 @@ let tab=ref("login")
             >
               Submit
             </button>
-          </form>
+          </Form>
 
         </div>
       </div>
