@@ -1,40 +1,90 @@
 <script setup>
+import { Form, Field, defineRule, ErrorMessage, configure } from 'vee-validate'
+import {
+  required,
+  email,
+  min,
+  max,
+  alpha_spaces,
+  min_value,
+  max_value,
+  confirmed,
+  not_one_of as excluded
+} from '@vee-validate/rules'
+import { ref } from 'vue'
+import { useModalStore } from '../stores/modal'
+const modalStore = useModalStore()
 
-import { Form, Field, defineRule, ErrorMessage } from 'vee-validate';
-import { required, email, min, max, alpha_spaces, min_value, max_value, confirmed } from '@vee-validate/rules';
+defineRule('required', required)
+defineRule('tos', required)
+defineRule('email', email)
+defineRule('min', min)
+defineRule('max', max)
+defineRule('alpha_spaces', alpha_spaces)
+defineRule('min_value', min_value)
+defineRule('max_value', max_value)
+defineRule('passwords_mismatch', confirmed)
+defineRule('excluded', excluded)
+defineRule('country_excluded', excluded)
 
-import{ref} from 'vue'
-import { useModalStore } from "../stores/modal";
-const modalStore = useModalStore();
-
-let tab=ref("login")
-
-defineRule('required',required)
-defineRule('email',email)
-defineRule('min',min)
-defineRule('max',max)
-defineRule('alpha_spaces',alpha_spaces)
-defineRule('min_value',min_value)
-defineRule('max_value',max_value)
-defineRule('confirmed',confirmed)
-
+let tab = ref('login')
 
 let schema = {
-    name: "required|min:3|max:100|alpha_spaces",
-    email: "required|min:3|max:100|email",
-    age: "required|min_value:18|max_value:100",
-    password: "required|min:3|max:100",
-    confirm_password: "confirmed:@password",
-    country: "",
-    tos: ""
-
+  name: 'required|min:3|max:100|alpha_spaces',
+  email: 'required|min:3|max:100|email',
+  age: 'required|min_value:18|max_value:100',
+  password: 'required|min:9|max:100|excluded:password',
+  confirm_password: 'passwords_mismatch:@password',
+  country: 'required|country_excluded:Antarctica',
+  tos: 'tos'
 }
+let userData = {
+  country: 'USA'
+}
+let reg_in_submission = false;
+let reg_show_alert = false;
+let reg_alert_variant = 'bg-blue-500';
+let reg_alert_msg = "Please wait! Your account is being created.";
 
+configure({
+  generateMessage: (ctx) => {
+    const messages = {
+      required: `The field ${ctx.field} is required`,
+      min: `The field ${ctx.field} is too short`,
+      max: `The field ${ctx.field} is too long`,
+      alpha_spaces: `The field ${ctx.field} may only contain alphabetical characters and spaces`,
+      email: `The field ${ctx.field} must be valid email`,
+      min_value: `The field ${ctx.field} is too low`,
+      max_value: `The field ${ctx.field} is too high`,
+      excluded: `YOu are not allowed to use this value for the field ${ctx.field}`,
+      country_excluded: `Due to restrictions, we do not accept users from this location.`,
+      passwords_mismatch: `The passwords don't match`,
+      tos: `You must accept the Terms of Service`
+    }
+    const message = messages[ctx.rule.name]
+        ? messages[ctx.rule.name]
+        : `The field ${ctx.field} is invalid`;
 
+    return message;
+  },
+  validateOnBlur: true,
+  validateOnChange: true,
+  validateOnInput: false,
+  validateOnModelUpdate: true
+
+})
+
+const register=(values)=> {
+  console.log("=====>Submitted Data====>",values)
+}
 </script>
 <template>
   <!-- Auth Modal -->
-  <div  :class="{ hidden: modalStore.authModalShow }" class="fixed z-10 inset-0 overflow-y-auto " id="modal">
+  <div
+      :class="{ hidden: modalStore.authModalShow }"
+      class="fixed z-10 inset-0 overflow-y-auto"
+      id="modal"
+  >
     <div
         class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
     >
@@ -43,9 +93,7 @@ let schema = {
       </div>
 
       <!-- This element is to trick the browser into centering the modal contents. -->
-      <span class="hidden sm:inline-block sm:align-middle sm:h-screen"
-      >&#8203;</span
-      >
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
 
       <div
           class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
@@ -56,7 +104,10 @@ let schema = {
           <div class="flex justify-between items-center pb-4">
             <p class="text-2xl font-bold">Your Account</p>
             <!-- Modal Close Button -->
-            <div class="modal-close cursor-pointer z-50"  @click.prevent="modalStore.toggleAuthModal">
+            <div
+                class="modal-close cursor-pointer z-50"
+                @click.prevent="modalStore.toggleAuthModal"
+            >
               <i class="fas fa-times"></i>
             </div>
           </div>
@@ -70,7 +121,7 @@ let schema = {
                   @click.prevent="tab = 'login'"
                   :class="{
                   'hover:text-white text-white bg-blue-600': tab === 'login',
-                  'hover:text-blue-600': tab === 'register',
+                  'hover:text-blue-600': tab === 'register'
                 }"
               >Login</a
               >
@@ -82,7 +133,7 @@ let schema = {
                   @click.prevent="tab = 'register'"
                   :class="{
                   'hover:text-white text-white bg-blue-600': tab === 'register',
-                  'hover:text-blue-600': tab === 'login',
+                  'hover:text-blue-600': tab === 'login'
                 }"
               >Register</a
               >
@@ -90,7 +141,6 @@ let schema = {
           </ul>
 
           <!-- Login Form -->
-
           <Form v-show="tab === 'login'" :validation-schema="schema">
             <!-- Email -->
             <div class="mb-3">
@@ -123,7 +173,18 @@ let schema = {
           </Form>
 
           <!-- Registration Form -->
-          <Form v-show="tab==='register'" :validation-schema="schema">
+          <div class="text-white text-center font-bold p-4 rounded mb-4"
+               v-if="reg_show_alert"
+               :class="reg_alert_variant"
+          >
+            {{ reg_alert_msg }}
+          </div>
+          <Form
+              v-show="tab === 'register'"
+              :validation-schema="schema"
+              @submit="register"
+              :initial-values="userData"
+          >
             <!-- Name -->
             <div class="mb-3">
               <label class="inline-block mb-2">Name</label>
@@ -146,7 +207,6 @@ let schema = {
               />
               <ErrorMessage class="text-red-600" name="email" />
             </div>
-
             <!-- Age -->
             <div class="mb-3">
               <label class="inline-block mb-2">Age</label>
@@ -160,12 +220,18 @@ let schema = {
             <!-- Password -->
             <div class="mb-3">
               <label class="inline-block mb-2">Password</label>
-              <Field
-                  type="password"
-                  name="password"
-                  class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
-                  placeholder="Password"
-              />
+              <Field name="password" :bails="false" v-slot="{ field, errors }">
+                <input
+                    type="password"
+                    class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
+                    placeholder="Password"
+                    v-bind="field"
+                />
+                <div class="text-red-600" v-for="error in errors" :key="error">
+                  {{ error }}
+                </div>
+              </Field>
+
               <ErrorMessage class="text-red-600" name="password" />
             </div>
             <!-- Confirm Password -->
@@ -182,39 +248,39 @@ let schema = {
             <!-- Country -->
             <div class="mb-3">
               <label class="inline-block mb-2">Country</label>
-              <select
+              <Field
+                  as="select"
+                  name="country"
                   class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
-               name="country"
               >
                 <option value="USA">USA</option>
                 <option value="Mexico">Mexico</option>
                 <option value="Germany">Germany</option>
-              </select>
+                <option value="Antarctica">Antarctica</option>
+              </Field>
               <ErrorMessage class="text-red-600" name="country" />
             </div>
             <!-- TOS -->
             <div class="mb-3 pl-6">
               <Field
-                  name="tos"
                   type="checkbox"
                   class="w-4 h-4 float-left -ml-6 mt-1 rounded"
+                  name="tos"
+                  value="1"
               />
-
-              <ErrorMessage class="text-red-600" name="tos" />
               <label class="inline-block">Accept terms of service</label>
+              <ErrorMessage class="text-red-600 block" name="tos" />
             </div>
             <button
                 type="submit"
                 class="block w-full bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700"
+                :disabled="reg_in_submission"
             >
               Submit
             </button>
           </Form>
-
         </div>
       </div>
     </div>
   </div>
 </template>
-
-
